@@ -1,12 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
+    <style>
+        canvas {
+            border: 1px dashed #000;
+            background: url(./image/ditu.jpg);
+            background-size: 512px 384px;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>hello wrok</h1>
+    <canvas width="512" height="384" id="canvas"></canvas>
 </body>
+
 </html>
+<script src="./js/game.js"></script>
+<script src="./js/fish.js"></script>
+<script src="./js/zidan.js"></script>
+<script src="./js/player.js"></script>
+<script>
+new Game()
+</script>
