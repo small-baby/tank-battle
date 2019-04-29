@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        var mainCanvas;
+        was mainctx;
+        var mainCanvasWidth;
+        var mainCanvasHeight;
+
+        Var imgSrc = {};     // All image resources
+        Var fishArr = [];    // Fish
+        Var bulletArr = []; // bullet collection
+        Var coinArr = [];    // coin collection
+        Var coinTextArr = [];   // gold coin collection
+        Var cannonType = 1;      // barrel number
+        Var cannonRotate = 0;    // barrel angle
+
+        Var score = 0;   // game scores
+        Var energyNum = 0; // energy bar
+        was mouseDownType;
+        var isAddEnergy = 1;
+
+        var bgm;
+        have bgm_coin;
+
+        // Image loading
+        function load(arr, breakFun) {
+            var iNow = 0;
+            for (var i = 0; i < arr.length; i++) {
+                was img = new Image();
+                img.onload = function () {
+                    iNow++;
+                    if (iNow >= arr.length) {
+                        breakFun();
+                    }
+                };
+                img.src = arr[i].src;
+                var name = arr[i].name;
+                imgSrc[name] = img;
+            }
+        }
+
+        window.onload = function () {
+
+            bgm = document.getElementById("bgmGame");
+            bgm_coin = document.getElementById("bgmCoin");
+            bgm.volume = 0.5;
+            / / Initialize the score
+            if (!localStorage.fishing_score) {
+                localStorage.fishing_score = 1000;
+            }
+            score = parseInt(localStorage.fishing_score);
+            / / Initialize the energy bar
+            if (!localStorage.fishing_energyNum) {
+                localStorage.fishing_energyNum = 0;
+            }
+            energyNum = parseInt(localStorage.fishing_energyNum);
+            if (!localStorage.fishing_isAddEnergy) {
+                localStorage.fishing_isAddEnergy = 1;
+            }
+            isAddEnergy = parseInt(localStorage.fishing_isAddEnergy);
+
+            load(imgSrcArr, function () {
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("start").style.display = "block";
+                var startButton = document.getElementById(" startButton ");
+                startButton.addEventListener("click", function () {
+                    document.getElementById("mainCanvas").style.display = "block";
+                    document.getElementById("startPage").style.display = "none";
+                    start();
+                    addEvent();
+                });
+            });
+        };
+
+        //The game starts
+        function start() {
+            var iNow = 0;
+            Bgm.play();
+            mainCanvas = document.getElementById("mainCanvas");
+            mainctx = mainCanvas.getContext("2d");
+            setInterval(function () {
+                / / Update screen properties
+                mainCanvasWidth = mainCanvas.offsetWidth;
+                mainCanvasHeight = mainCanvas.offsetHeight;
+                mainCanvas.setAttribute("height", mainCanvasHeight);
+                mainCanvas.setAttribute("width", mainCanvasWidth);
+
+                Mainctx.clearRect(0, 0, mainCanvasWidth, mainCanvasHeight);     // empty the canvas
+                Mainctx.save();
+                / / Paint the background
+                mainctx.drawImage(imgSrc["bg"], 0, 0, mainCanvasWidth, mainCanvasHeight);
+                drawFish();
+                drawBullet();
+                drawCoinText();
+                drawCoin();
+                drawBar();
+                mainctx.restore();
+                if (iNow % frequency == 0) {
+                    iNow = 0;
+                    addFish();
+                }
+                iNow++;
+            }, 30);
+        }
+
+
+        // Add fish
+        function addFish() {
+            var random = Math.random();
+            var fishType = 1;
+            for (was i = 1; in <= flashAtt_length; in ++ ) {
+                var name = "fish" + i;
+                if (random <= flashAtt[name].pro) {
+                    fishType = i;
+                    break;
+                }
+            }
+            Var start = Math.random();       // preset direction
+            if (start > 0.5) {
+                fishArr.push({
+                    type: "fish" + fishType,
+                    x: -40,
+                    y: Math.random() * (mainCanvasHeight * 0.5) + mainCanvasHeight * 0.25,
+                    rotate: Math.random() * (1.2) - 0.6,
+                    frame: 0,
+                    isLive: true
+                });
+            } else {
+                fishArr.push({
+                    type: "fish" + fishType,
+                    x: mainCanvasWidth + 40,
+                    y: Math.random() * (mainCanvasHeight * 0.5) + mainCanvasHeight * 0.25,
+                    rotate: Math.random() * (1.2) - 0.6 + Math.PI,
+                    frame: 0,
+                    isLive: true
+                });
+            }
+        }
+
+        / / draw fish school
+        function drawFish() {
+            for (var i = 0; i < fishArr.length; i++) {
+                / / cross - border judgment
+                if (fishArr[i].x < -150 || fishArr[i].x > mainCanvasWidth + 150 || fishArr[i].y < -150 || fishArr[i].y > mainCanvasHeight + 150) {
+                    fishArr.splice(i, 1);
+                    i--;
+                    continue;
+                }
+                var name = fishArr[i].type
+                Mainctx.save();
+                mainctx.translate(fishArr[i].x, fishArr[i].y);
+                mainctx.rotate(fishArr[i].rotate);
+                mainctx.translate(-flashAtt[fishArr[i].type].width / 2, -flashAtt[fishArr[i].type].height / 2);
+                if (fishArr[i].rotate > 0.5 * Math.PI)
+                    mainctx.scale(1, -1);
+                mainctx.drawImage(imgSrc[name], 0, flashAtt[name].height * Math.floor(fishArr[i].frame), flashAtt[name].width, flashAtt[name].height, 0, 0, flashAtt[name].width, flashAtt[name].height);
+                mainctx.restore();
+                / / Modify the parameters
+                fishArr[i].frame += 0.25;
+                if (fishArr[i].isLive) {
+                    if (fishArr[i].frame >= flashAtt[name].sumFrame - 4)
+                        fishArr[i].frame = 0;
+                    fishArr[i].x += flashAtt[name].speed * Math.cos(fishArr[i].rotate);
+                    fishArr[i].y += flashAtt[name].speed * Math.sin(fishArr[i].rotate);
+                    fishArr[i].rotate += (Math.random() * 0.02 - 0.01);
+                }
+                else {
+                    // death
+                    if (fishArr[i].frame >= flashAtt[name].sumFrame) {
+                        addCoinText(fishArr[i].x, fishArr[i].y, flashAtt[name].cost);      // Add gold coin numbers
+                        addCoin(fishArr[i].x, fishArr[i].y, flashAtt[name].cost);         // Add coins
+                        fishArr.splice(i, 1);
+                        i--
+                    }
+                }
+            }
+        }
+
+        // Add bullets
+        function addBullet() {
+            bulletArr.push({
+                type: "bullet" + cannonType,
+                x: mainCanvasWidth / 2 + 45,
+                and: mainCanvasHeight - barHeight / 2,
+                rotate: -0.5 * Math.PI + cannonRotate
+            });
+        }
+
+        / / draw bullets
+        function drawBullet() {
+            for (var i = 0; i < bulletArr.length; i++) {
+                var isDraw = true;
+                / / cross - border judgment
+                if (bulletArr[i].x < -15 || bulletArr[i].x > mainCanvasWidth + 15 || bulletArr[i].y < -15 || bulletArr[i].y > mainCanvasHeight + 15)
+                    isDraw = false;
+                / / collision detection
+                if (isDraw && bulletArr[i].x > 20 && bulletArr[i].x < mainCanvasWidth - 20 && bulletArr[i].y > 20 && bulletArr[i].y < mainCanvasHeight - barHeight - 30) {
+                    was bulletX = bulletArr[i].x;
+                    was bulletY = bulletArr[i].y;
+                    for (var j = 0; j < fishArr.length; j++) {
+                        if (fishArr[j].x < 0 || fishArr[j].x > mainCanvasWidth || fishArr[j].y < 0 || fishArr[j].y > mainCanvasHeight - barHeight - 10 || fishArr[j].isLive == false)
+                            continue;
+                        the var in our mutual relationship = getRelationship(bulletX, bulletY, fishArr[j is].the x, fishArr[j is].the y);
+                        if (relationship.d <= bulletAtt[bulletArr[i].type].range) {
+                            fishArr[j] frame = flashAtt[fishArr[j] type ].sumFrame - 4;
+                            fishArr[j].isLive = false;
+                            isDraw = false;
+                            // Gold sound effects
+                            bgm_coin.currentTime = 0.0;
+                            Bgm_coin.play
+                        }
+                    }
+                }
+                if (!isDraw) {
+                    bulletArr.splice(i, 1);
+                    i--;
+                    continue;
+                }
+                var name = bulletArr[i].type;
+                Mainctx.save();
+                mainctx.translate(bulletArr[i].x, bulletArr[i].y);
+                mainctx.rotate(bulletArr[i].rotate + 0.5 * Math.PI);
+                mainctx.translate(-bulletAtt[name].width / 2, -bulletAtt[name].height / 2);
+                if (bulletArr[i].rotate > 0.5 * Math.PI)
+                    mainctx.scale(1, -1);
+                mainctx.drawImage(imgSrc[name], 0, 0, bulletAtt[name].width, bulletAtt[name].height, 0, 0, bulletAtt[name].width, bulletAtt[name].height);
+                mainctx.restore();
+                / / Modify the parameters
+                bulletArr[i].x += bulletAtt[name].speed * Math.cos(bulletArr[i].rotate);
+                bulletArr[i].y += bulletAtt[name].speed * Math.sin(bulletArr[i].rotate
+    }
+        }
+
+        // Add gold coin numbers
+        function addCoinText(x, y, num) {
+            coinTextArr.push({
+                x: x,
+                y: y,
+                whether, whether,
+                frame: 0
+            })
+        }
+
+        / / draw gold coin numbers
+        function drawCoinText() {
+            for (var i = 0; i < coinTextArr.length; i++) {
+                var num = coinTextArr[i].num;
+                Mainctx.save();
+                mainctx.translate(coinTextArr[i].x - coinTextWidth / 2, coinTextArr[i].y - coinTextHeight / 2);
+                mainctx.drawImage(imgSrc["coinText"], 10 * coinTextWidth, 0, coinTextWidth, coinTextHeight, 0, 0, coinTextWidth, coinTextHeight);
+                var iNow = 1;
+                was canDraw = false;
+                for (var j = flashCost_maxLength - 1; j >= 0; j--) {
+                    var numbit = Math.floor(num / (Math.pow(10, j)));
+                    if (numbit)
+                        canDraw = true;
+                    if (canDraw) {
+                        mainctx.drawImage(imgSrc["coinText"], numbit * coinTextWidth, 0, coinTextWidth, coinTextHeight, coinTextWidth * iNow, 0, coinTextWidth, coinTextHeight);
+                        iNow++;
+                    }
+                    num %= (Math.pow(10, j))
+                }
+                mainctx.restore();
+                coinTextArr[i].frame++;
+                coinTextArr[i].y -= coinTextSpeed;
+                if (coinTextArr[i].frame > coinTime * coinSpeed) {
+                    coinTextArr.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // Add coins
+        function addCoin(x, y, num) {
+            var relationship = getRelationship((mainCanvasWidth - barWidth) / 2 + 80, mainCanvasHeight - barHeight + 20, x, y);
+            coinArr.push({
+                x: x,
+                y: y,
+                dx: relationship.dx / (coinTime * coinSpeed),
+                two: relationship.two / (coinTime * coinSpeed),
+                whether, whether,
+                frame: 0
+            })
+        }
+
+        // draw coins
+        function drawCoin() {
+            for (var i = 0; i < coinArr.length; i++) {
+                Mainctx.save();
+                mainctx.translate(coinArr[i].x - coinWidth, coinArr[i].y - coinHeight);
+                if (coinArr[i].num <= coinLim)
+                    mainctx.drawImage(imgSrc["coinAni1"], 0, coinHeight * Math.floor(coinArr[i].frame), coinWidth, coinHeight, 0, 0, coinWidth, coinHeight);      //小硬币
+                else
+                    mainctx.drawImage(imgSrc["coinAni2"], 0, coinHeight * Math.floor(coinArr[i].frame), coinWidth, coinHeight, 0, 0, coinWidth, coinHeight);      //大硬币
+                mainctx.restore
+                coinArr[i].frame += 1 / coinSpeed;
+                coinArr[i].x += coinArr[i].dx;
+                coinArr[i].y + = coinArr[i].thy;
+                if (coinArr[i].frame > coinTime) {
+                    changeScore(coinArr[i].num);
+                    changeEnergy(coinArr[i].num);
+                    coinArr.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        / / draw the panel
+        function drawBar() {
+            Mainctx.save();
+            //The bottom of the panel
+            mainctx.translate((mainCanvasWidth - barWidth) / 2, mainCanvasHeight - barHeight + 3);
+            mainctx.drawImage(imgSrc["bottom-bar"], 0, 0, barWidth, barHeight);
+            / / Game scores
+            var num = score >= 0 ? score : 0;
+            for (was i = 5; i > = 0; i - ) {
+                / / Digital quantile processing
+                var numBit = Math.floor(num % 10);
+                num = Math.floor(num / 10);
+                mainctx.drawImage(imgSrc["bottom-num"], 0, scoreHeight * (9 - numBit), scoreWidth, scoreHeight, 20 + i * (scoreWidth + 3), 44, scoreWidth, scoreHeight);
+            }
+            // Barrel adjustment button
+            if (mouseDownType == '+') {
+                mainctx.drawImage(imgSrc["cannon_plus_down"], 0, 0, cannonWidth, cannonHeight, 162, 45, cannonWidth - 15, cannonHeight - 8);     //加号
+            } else {
+                mainctx.drawImage(imgSrc["cannon_plus"], 0, 0, cannonWidth, cannonHeight, 162, 45, cannonWidth - 15, cannonHeight - 8);          //加号
+            }
+            if (mouseDownType == '-') {
+                mainctx.drawImage(imgSrc["cannon_minus_down"], 0, 0, cannonWidth, cannonHeight, 188, 45, cannonWidth - 15, cannonHeight - 8);    //减号
+            } else {
+                mainctx.drawImage(imgSrc["cannon_minus"], 0, 0, cannonWidth, cannonHeight, 188, 45, cannonWidth - 15, cannonHeight - 8);        //减号
+            }
+            / / draw a cannon
+            Mainctx.save();
+            mainctx.translate(barWidth / 2 + 45, barHeight / 2);
+            mainctx.rotate(cannonRotate);
+            mainctx.fillStyle = "#789456";
+            mainctx.fillRect(0, 0, 10, 10);
+            var cannonName = "cannon" + cannonType;
+            mainctx.translate(-cannonAtt[cannonName].width / 2, -cannonAtt[cannonName].height / 2);
+            mainctx.drawImage(imgSrc[cannonName], 0, 0, cannonAtt[cannonName].width, cannonAtt[cannonName].height, 0, 0, cannonAtt[cannonName].width, cannonAtt[cannonName].height);
+            mainctx.restore();
+            / / draw energy bar
+            if (!isAddEnergy)
+                changeEnergy(0 - energySpeed);
+            else
+                changeEnergy(0.05);
+            was proportion = energyNum / energyMax;
+            Mainctx.save();
+            mainctx.translate(542, 44);
+            mainctx.drawImage(imgSrc["energy-bar"], 0, 0, energyWidth * proportion, energyHeight, 0, 0, energyWidth * proportion, energyHeight);
+            mainctx.restore();
+            mainctx.restore();
+        }
+
+        / / Get the relationship between two points
+            / / Based on p1
+        function getRelationship(p1X, p1Y, p2X, p2Y) {
+            was dx = p1X - p2X;
+            var dy = p1Y - p2Y;
+            var d = Math.sqrt(dx * dx + dy * dy);
+            var rotate = Math.acos(dx / d);
+            return {
+                dx: dx,
+                you: you,
+                d: d,
+                rotate: rotate
+            }
+        }
+
+        / / Modify the results
+        function changeScore(num) {
+            score + = num;
+            localStorage.fishing_score = score;
+        }
+
+        / / Modify the energy bar
+        function changeEnergy(num) {
+            if ((isAddEnergy && num > 0) || (!isAddEnergy && num < 0))
+                energyNum + = num;
+            if (energyNum > energyMax) {
+                energyNum = energyMax;
+                reward();
+                isAddEnergy = 0;
+            }
+            if (energyNum < 0) {
+                energyNum = 0;
+                isAddEnergy = 1;
+            }
+            localStorage.fishing_energyNum = parseInt(energyNum);
+            localStorage.fishing_isAddEnergy = isAddEnergy;
+        }
+
+        // Reward
+        function reward() {
+            for (var i = 0; i < rewardFish; i++)
+                addFish();
+        }
+
+        / / Bind event
+        function addEvent() {
+            mainCanvas.addEventListener("mousedown", function (ev) {
+                var mouseX = ev.clientX;
+                have mouseY = home.clientY;
+                / / button to judge
+                var startX = (mainCanvasWidth - barWidth) / 2;
+                var startY = mainCanvasHeight - barHeight + 3;
+                var testCannonX = mouseX - startX - 162;
+                var testCannonY = mouseY - startY - 45;
+                if (testCannonX >= 0 && testCannonX <= cannonWidth - 15 && testCannonY >= 0 && testCannonY <= cannonHeight - 8) {
+                    mouseDownType = "+";
+                    cannonType++;
+                } else if (testCannonX >= 26 && testCannonX <= cannonWidth + 11 && testCannonY >= 0 && testCannonY <= cannonHeight - 8) {
+                    mouseDownType = "-";
+                    cannonType--;
+                } else {
+                    // shot bullet
+                    if (bulletAtt["bullet" + cannonType].cost <= score) {
+                        addBullet();
+                        changeScore(-bulletAtt["bullet" + cannonType].cost);
+                    }
+                }
+                if (cannonType > cannonAtt_length)
+                    cannonType = 1;
+                else if (cannonType < 1)
+                    cannonType = cannonAtt_length;
+            });
+            mainCanvas.addEventListener("mouseup", function () {
+                mouseDownType = "";
+            });
+            mainCanvas.addEventListener("mousemove", function (ev) {
+                var mouseX = ev.clientX;
+                have mouseY = home.clientY;
+                var relationship = getRelationship(mainCanvasWidth / 2 + 45, mainCanvasHeight - barHeight / 2, mouseX, mouseY);
+                cannonRotate = -0.5 * Math.PI + relationship.rotate;
+            });
+        }
+    </script>
+</body>
+
+</html>

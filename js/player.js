@@ -1,10 +1,21 @@
-function Play(name){
-    this.name=name;
-    this.step=0;
-}
-Play.prototype.update=function(){
-    this.step++;
-    if(this.step>4)this.step=0
-}
-Play.prototype.render=function(){ this.name.ctx.drawImage(this.name.R.cannon1, 0, this.step*75, 74, 60.2,213, 350, 37, 30.1);
-}
+    function Player(game){
+        this.game=game;
+        
+        // 可是区域的宽高
+        this.x=this.game.curW/2-65;
+        this.y=this.game.curH-65-10;  
+    }
+    Player.prototype.update=function(){
+        
+    }
+    Player.prototype.render=function(){
+        // 弧度                         
+        this.hudu = -(Math.atan2(this.game.ImX-this.game.offx,this.game.ImY-this.game.offy)+180*Math.PI/180);
+        this.game.ctx.save();
+        this.game.ctx.translate(this.x,this.y);
+        this.game.ctx.rotate(this.hudu);
+        this.game.ctx.drawImage(this.game.R.gun, 0, 0, 64, 64, -32, -32, 65, 64);
+        this.game.ctx.restore();
+
+        // console.log(Math.ceil(Math.sin(this.hudu)*24));   
+    }
